@@ -62,7 +62,7 @@ async function main() {
       { new: true }
     ).populate("log");
 
-    res.json(user.toJSON());
+    res.json({ ...user.toJSON(), ...req.body });
   });
 
   const listener = app.listen(process.env.PORT || 3000, () => {
