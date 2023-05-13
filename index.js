@@ -11,7 +11,7 @@ app.use(cors());
 app.use(urlencoded({ extended: false }));
 app.use(express.static("public"));
 async function main() {
-  await mongoose.connect(process.env.MONGOOSE);
+  await mongoose.connect(process.env.MONGOOSE, {});
   app.get("/", (req, res) => {
     res.sendFile(__dirname + "/views/index.html");
   });
@@ -27,14 +27,31 @@ async function main() {
       let users = await User.find({}).select(["_id", "username"]);
       res.json(users);
     });
-  app.get("/api/users/:_id/logs", async function (req, res) {
-    const user = await User.findById(req.params._id)
-      .select({ log: 1 })
-      .populate("log");
-    const userJSON = user.toJSON()
-    userJSON.count = userJSON.log.length
-    res.json(userJSON);
-  });
+  app.get(
+    "/api/users/:_id/logs",
+    function (req, res, next) {
+      res.match = {};
+
+      if ("from" in req.query || "to" in req.query) res.match.date = {};
+      if (req.query.from) res.match.date.$gt = new Date(req.query.from);
+      if (req.query.to) res.match.date.$lt = new Date(req.query.to);
+      next();
+    },
+    async function (req, res) {
+      let user = await User.findById(req.params._id)
+        .select({ log: 1 })
+        .populate({
+          path: "log",
+          match: res.match,
+          limit: req.query.limit
+        })
+        .exec()
+        .catch((e) => console.error(e));
+      const userJSON = user.toJSON();
+      userJSON.count = userJSON.log.length;
+      res.json(userJSON);
+    }
+  );
   app.post("/api/users/:_id/exercises", async function (req, res) {
     const log = await Log.create(req.body);
     let user = await User.findByIdAndUpdate(
