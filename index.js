@@ -60,9 +60,9 @@ async function main() {
         $push: { log: log._id },
       },
       { new: true }
-    ).populate("log");
+    ).select('username');
 
-    res.json({ ...user.toJSON(), ...req.body });
+    res.json({ ...user.toJSON(), ...log.toJSON()});
   });
 
   const listener = app.listen(process.env.PORT || 3000, () => {
