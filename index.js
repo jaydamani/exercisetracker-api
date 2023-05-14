@@ -11,7 +11,7 @@ app.use(cors());
 app.use(urlencoded({ extended: false }));
 app.use(express.static("public"));
 async function main() {
-  await mongoose.connect(process.env.MONGOOSE, {  });
+  await mongoose.connect(process.env.MONGOOSE, {});
   app.get("/", (req, res) => {
     res.sendFile(__dirname + "/views/index.html");
   });
@@ -43,7 +43,7 @@ async function main() {
         .populate({
           path: "log",
           match: res.match,
-          limit: req.query.limit
+          limit: req.query.limit,
         })
         .exec()
         .catch((e) => console.error(e));
@@ -55,14 +55,20 @@ async function main() {
   app.post("/api/users/:_id/exercises", async function (req, res) {
     const log = await Log.create(req.body);
     const user = await User.findByIdAndUpdate(
-      req.params._id,
+      req.params._id || req.body._id,
       {
         $push: { log: log._id },
       },
       { new: true }
-    ).select('username');
+    ).select("username");
 
-    res.json({ ...log.toJSON(), ...user.toJSON()});
+    res.json({
+      username: user.username,
+      description: log.description,
+      duration: log.duration,
+      _id: user._id,
+      date: log.date.toDateString(),
+    });
   });
 
   const listener = app.listen(process.env.PORT || 3000, () => {
