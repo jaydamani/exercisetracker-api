@@ -11,7 +11,7 @@ app.use(cors());
 app.use(urlencoded({ extended: false }));
 app.use(express.static("public"));
 async function main() {
-  await mongoose.connect(process.env.MONGOOSE, {});
+  await mongoose.connect(process.env.MONGOOSE, {  });
   app.get("/", (req, res) => {
     res.sendFile(__dirname + "/views/index.html");
   });
@@ -54,7 +54,7 @@ async function main() {
   );
   app.post("/api/users/:_id/exercises", async function (req, res) {
     const log = await Log.create(req.body);
-    let user = await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
       req.params._id,
       {
         $push: { log: log._id },
@@ -62,7 +62,7 @@ async function main() {
       { new: true }
     ).select('username');
 
-    res.json({ ...user.toJSON(), ...log.toJSON()});
+    res.json({ ...log.toJSON(), ...user.toJSON()});
   });
 
   const listener = app.listen(process.env.PORT || 3000, () => {
